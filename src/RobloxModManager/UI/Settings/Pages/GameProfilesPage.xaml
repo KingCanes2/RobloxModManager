@@ -1,0 +1,70 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.GameProfilesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Game profiles"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
+                   Text="Give a game its own fast flags, or turn mods off just for it. A profile switches on by itself when you join that game from the Roblox website."/>
+
+        <Border Style="{StaticResource InfoBar}">
+            <TextBlock TextWrapping="Wrap"
+                       Text="Roblox reads flags once, when it starts. If you hop to another game inside Roblox, the first game's profile stays in effect until Roblox restarts."/>
+        </Border>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="New" MinWidth="80" Click="New_Click"/>
+                    <Button x:Name="DeleteButton" Content="Delete" MinWidth="80" Margin="8,0,0,0" Click="Delete_Click"/>
+                </StackPanel>
+                <ListBox x:Name="ProfileList" Style="{StaticResource CardListBox}" Height="360"
+                         SelectionChanged="ProfileList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="16,0,0,0" VerticalAlignment="Top">
+                <Grid>
+                    <TextBlock x:Name="EmptyText" Style="{StaticResource SecondaryText}" Margin="0,4"
+                               Text="Select a profile to edit it, or choose New. You can also make one from a game on the Play history page."/>
+
+                    <StackPanel x:Name="EditorPanel" Visibility="Collapsed">
+                        <TextBlock Text="Game" FontWeight="SemiBold"/>
+                        <Grid Margin="0,6,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="PlaceBox" TextChanged="Place_TextChanged"/>
+                            <Button x:Name="LookUpButton" Grid.Column="1" Content="Look up name" Margin="8,0,0,0" Click="LookUp_Click"/>
+                        </Grid>
+                        <TextBlock x:Name="PlaceHint" Style="{StaticResource SecondaryText}" FontSize="12.5" Margin="0,0,0,14"
+                                   Text="Paste the game's page link, or its place ID."/>
+
+                        <TextBlock Text="Name" FontWeight="SemiBold"/>
+                        <TextBox x:Name="NameBox" Margin="0,6,0,14" TextChanged="Name_TextChanged"/>
+
+                        <CheckBox x:Name="ModsBox" Content="Use my mods in this game" Margin="0,0,0,16" Click="Mods_Click"/>
+
+                        <TextBlock Text="Extra fast flags" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource SecondaryText}" FontSize="12.5" Margin="0,2,0,6"
+                                   Text="A JSON object, like {&quot;DFIntTaskSchedulerTargetFps&quot;: &quot;240&quot;}. These are added to your normal flags; same name means this value wins."/>
+                        <TextBox x:Name="FlagsBox" Height="150" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
+                                 VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                 FontFamily="Cascadia Mono, Consolas" FontSize="12.5" TextChanged="Flags_TextChanged"/>
+                        <TextBlock x:Name="FlagsStatus" Style="{StaticResource SecondaryText}" FontSize="12.5" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </StackPanel>
+</UserControl>

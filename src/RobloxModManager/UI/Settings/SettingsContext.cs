@@ -7,6 +7,8 @@ namespace RobloxModManager.UI.Settings;
 public static class SettingsPages
 {
     public const string Integrations = "Integrations";
+    public const string GameProfiles = "GameProfiles";
+    public const string PlayHistory = "PlayHistory";
     public const string Mods = "Mods";
     public const string FastFlags = "FastFlags";
     public const string FastFlagEditor = "FastFlagEditor";
@@ -38,6 +40,10 @@ public sealed class SettingsContext
     public bool GlobalDirty { get; set; }
     public bool ForceReinstall { get; set; }
     public Dictionary<ShortcutKind, bool> ShortcutStates { get; } = new();
+
+    /// <summary>Set by Play history's "Make profile"; picked up by the Game profiles page.</summary>
+    public long? PendingProfilePlaceId { get; set; }
+    public string? PendingProfileName { get; set; }
 
     private string _savedSettings = "";
     private string _savedFlags = "";

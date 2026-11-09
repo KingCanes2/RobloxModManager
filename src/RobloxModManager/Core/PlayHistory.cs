@@ -46,6 +46,26 @@ public sealed class PlayHistory
         }
     }
 
+    /// <summary>Caches a game's name on disk (re-reads first, like <see cref="Append"/>).</summary>
+    public static void SetName(long placeId, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return;
+
+        lock (FileLock)
+        {
+            var history = Load();
+            history.GameNames[placeId] = name;
+            history.Save();
+        }
+    }
+
+    public static void Clear()
+    {
+        lock (FileLock)
+            new PlayHistory().Save();
+    }
+
     public string NameFor(long placeId) =>
         GameNames.TryGetValue(placeId, out string? name) && !string.IsNullOrWhiteSpace(name) ? name : $"Place {placeId}";
 

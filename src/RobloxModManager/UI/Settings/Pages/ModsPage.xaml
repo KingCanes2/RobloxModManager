@@ -7,6 +7,20 @@
         <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
                    Text="Replace Roblox's sounds, textures, fonts and other files. Mods are applied every time Roblox starts, and removing a file puts the original back."/>
 
+        <!-- Smart drop: files are placed where Roblox keeps them -->
+        <Border x:Name="DropZone" AllowDrop="True" CornerRadius="10" BorderThickness="2" Padding="20,22" Margin="0,0,0,12"
+                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource ControlBorderBrush}"
+                DragEnter="Drop_DragEnter" DragOver="Drop_DragOver" DragLeave="Drop_DragLeave" Drop="Drop_Drop">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock Style="{StaticResource IconText}" Text="&#xE896;" FontSize="26" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource AccentBrush}"/>
+                <TextBlock Text="Drop mod files here" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,4"/>
+                <TextBlock Style="{StaticResource SecondaryText}" TextAlignment="Center" MaxWidth="460"
+                           Text="Sounds, images, fonts or a .zip mod pack. Each file is matched to the Roblox file it replaces and put in the right folder for you."/>
+                <Button Content="Choose files..." HorizontalAlignment="Center" Margin="0,12,0,0" Click="ChooseFiles_Click"/>
+            </StackPanel>
+        </Border>
+
         <ctl:OptionControl Header="Apply mods" Description="Turn off to play without your mods. Your files stay in the mods folder.">
             <CheckBox x:Name="ApplyModsToggle" Style="{StaticResource ToggleSwitch}" Click="ApplyMods_Click"/>
         </ctl:OptionControl>

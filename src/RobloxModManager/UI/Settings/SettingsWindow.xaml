@@ -32,6 +32,18 @@
                             <TextBlock Text="Mods" VerticalAlignment="Center"/>
                         </StackPanel>
                     </ListBoxItem>
+                    <ListBoxItem Tag="GameProfiles">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource IconText}" Text="&#xE8EC;" Margin="0,0,14,0"/>
+                            <TextBlock Text="Game profiles" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="PlayHistory">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource IconText}" Text="&#xE81C;" Margin="0,0,14,0"/>
+                            <TextBlock Text="Play history" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
                     <ListBoxItem Tag="FastFlags">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Style="{StaticResource IconText}" Text="&#xE7C1;" Margin="0,0,14,0"/>

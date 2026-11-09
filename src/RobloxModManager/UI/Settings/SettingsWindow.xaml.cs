@@ -35,6 +35,8 @@ public partial class SettingsWindow : Window
         {
             [SettingsPages.Integrations] = () => new IntegrationsPage(_context),
             [SettingsPages.Mods] = () => new ModsPage(_context),
+            [SettingsPages.GameProfiles] = () => new GameProfilesPage(_context),
+            [SettingsPages.PlayHistory] = () => new PlayHistoryPage(_context),
             [SettingsPages.FastFlags] = () => new FastFlagsPage(_context),
             [SettingsPages.FastFlagEditor] = () => new FastFlagEditorPage(_context),
             [SettingsPages.EngineSettings] = () => new EngineSettingsPage(_context),

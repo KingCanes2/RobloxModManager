@@ -26,6 +26,16 @@ To make a version that runs without the runtime installed, change `--self-contai
 
 To uninstall, use Windows **Settings > Apps**, or **Settings > About > Uninstall** inside the app. Roblox links go back to the official player if it's installed.
 
+## Features you won't find elsewhere
+
+| Feature | What it does |
+| --- | --- |
+| Smart mod drop | Drag sounds, images, fonts or a whole `.zip` mod pack onto the Mods page. Each file is matched by name to the Roblox file it replaces and put in the right folder. Zip packs with an extra wrapper folder are handled, and a font Roblox doesn't have can become the custom font. |
+| Game profiles | Give one game its own fast flags, or turn mods off only for it. The profile switches on by itself when you join that game from the website. Your normal flags are never edited. |
+| Play history | Reads Roblox's own logs to record time per game, including teleports. Shows the last 7 days, all-time totals, a day streak and each game's share. Names come from Roblox's public API and are cached. |
+| Break reminders | An optional corner notice after 30 minutes to 3 hours of play. It doesn't take focus or pause the game, and has a "remind me later" option. |
+| Safe-mode launch | Hold **Shift** while Roblox starts to launch once without any mods or flags. A fast way to check whether a mod is breaking a game. |
+
 ## What's in it
 
 | Area | What it does |
@@ -75,7 +85,7 @@ Rename the app by changing `ProjectName` and `DisplayName` in `Core/AppInfo.cs` 
 dotnet run --project tests/CoreTests
 ```
 
-The 90 checks cover a fresh install, updates, forced reinstall, corrupt downloads, cancelling mid-download, two launches at once, applying and restoring mods, the custom font, fast flags, global settings, the cleaner, and rejection of zip files that try to write outside their folder. They use a local fake of Roblox's servers, so they run anywhere without internet.
+The 130 checks cover a fresh install, updates, forced reinstall, corrupt downloads, cancelling mid-download, two launches at once, applying and restoring mods, the custom font, fast flags, global settings, the cleaner, place IDs in launch links, log parsing (joins, teleports, leaves), play history, game profiles, safe mode, smart mod placement, and rejection of zip files that try to write outside their folder. They use a local fake of Roblox's servers, so they run anywhere without internet.
 
 ## Credits
 

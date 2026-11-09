@@ -1,17 +1,33 @@
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Windows.Threading;
 using RobloxModManager.Core;
 using RobloxModManager.UI.Bootstrapper;
 using RobloxModManager.UI.Dialogs;
 
 namespace RobloxModManager.UI;
 
-/// <summary>Everything that happens between "launch Roblox" and Roblox being on screen.</summary>
+/// <summary>Everything that happens between "launch Roblox" and Roblox closing again.</summary>
 public static class LaunchFlow
 {
     public static async Task RunPlayerAsync(LaunchArguments args)
     {
         var settings = AppSettings.Load();
+
+        // Shift held while launching = one launch without mods or fast flags.
+        bool safeMode = SafeMode.IsShiftHeld();
+        AppSettings launchSettings = settings;
+
+        if (safeMode)
+        {
+            launchSettings = settings.Clone();
+            launchSettings.ApplyMods = false;
+            launchSettings.UseFastFlagManager = false;
+            Logger.WriteLine("LaunchFlow", "Safe mode: Shift was held, skipping mods and fast flags");
+        }
+
+        long? placeId = LaunchArguments.ExtractPlaceId(args.RobloxArguments);
+        GameProfile? profile = safeMode ? null : settings.FindProfile(placeId);
 
         if (args.RejectedLink)
         {
@@ -28,6 +44,12 @@ public static class LaunchFlow
         }
 
         var window = new BootstrapperWindow(settings.BootstrapperStyle, settings.BootstrapperTitle);
+
+        if (safeMode)
+            window.Title += " (safe mode: no mods or flags)";
+        else if (profile is not null)
+            window.Title += $" ({(string.IsNullOrWhiteSpace(profile.Name) ? "game profile" : profile.Name)})";
+
         window.Show();
 
         RobloxBootstrapper? bootstrapper = null;
@@ -38,7 +60,7 @@ public static class LaunchFlow
             for (int attempt = 0; attempt < 2 && executable is null; attempt++)
             {
                 bootstrapper?.Dispose();
-                bootstrapper = new RobloxBootstrapper(settings, AppState.Load(), new Deployment(settings.Channel), window);
+                bootstrapper = new RobloxBootstrapper(launchSettings, AppState.Load(), new Deployment(launchSettings.Channel), window, profile);
 
                 RobloxBootstrapper current = bootstrapper;
                 Action cancel = current.Cancel;
@@ -64,6 +86,7 @@ public static class LaunchFlow
                         return;
 
                     settings.Channel = Deployment.DefaultChannel;
+                    launchSettings.Channel = Deployment.DefaultChannel;
                     settings.Save();
                 }
                 finally
@@ -75,6 +98,7 @@ public static class LaunchFlow
             if (executable is null || bootstrapper is null)
                 return;
 
+            DateTime launchedUtc = DateTime.UtcNow;
             Process roblox = bootstrapper.StartRoblox(LaunchArguments.RefreshLaunchTime(args.RobloxArguments));
 
             var integrations = new IntegrationRunner();
@@ -86,13 +110,11 @@ public static class LaunchFlow
 
             await Task.Run(() => Cleaner.Run(settings));
 
-            if (integrations.HasAutoClose)
-            {
-                try { await RobloxProcess.WaitForExitAsync(roblox, CancellationToken.None); }
-                catch (Exception ex) { Logger.WriteException("LaunchFlow::Wait", ex); }
+            bool watch = settings.TrackPlaytime || settings.BreakReminderMinutes > 0 || integrations.HasAutoClose;
+            if (watch)
+                await WatchSessionAsync(roblox, launchedUtc, settings);
 
-                integrations.CloseAutoClose();
-            }
+            integrations.CloseAutoClose();
         }
         catch (Exception ex)
         {
@@ -106,6 +128,116 @@ public static class LaunchFlow
                 window.Finish();
 
             bootstrapper?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Stays in the background while Roblox runs: follows its log to record time per game and
+    /// shows a break reminder if one is set. Returns when Roblox closes.
+    /// </summary>
+    private static async Task WatchSessionAsync(Process roblox, DateTime launchedUtc, AppSettings settings)
+    {
+        long currentPlace = 0;
+        DateTime? joinedAt = null;
+        DateTime? reminderBase = null;   // when the current stretch of play started
+        TimeSpan nextReminder = TimeSpan.FromMinutes(Math.Max(settings.BreakReminderMinutes, 1));
+        BreakReminderWindow? reminder = null;
+        var names = new Dictionary<long, string>();
+
+        void EndSession(DateTime now)
+        {
+            if (joinedAt is { } start && currentPlace != 0 && settings.TrackPlaytime)
+            {
+                try { PlayHistory.Append(new PlaySession { PlaceId = currentPlace, StartUtc = start, EndUtc = now }); }
+                catch (Exception ex) { Logger.WriteException("LaunchFlow::History", ex); }
+            }
+
+            joinedAt = null;
+            currentPlace = 0;
+        }
+
+        async void LookUpName(long place)
+        {
+            if (names.ContainsKey(place))
+                return;
+
+            names[place] = $"Place {place}";
+            string? name = await RobloxGames.GetNameAsync(place);
+
+            if (name is not null)
+            {
+                names[place] = name;
+                try { PlayHistory.SetName(place, name); } catch { /* cache only */ }
+            }
+        }
+
+        void OnEvent(LogEvent e)
+        {
+            DateTime now = DateTime.UtcNow;
+
+            switch (e.Kind)
+            {
+                case LogEventKind.Joined:
+                    EndSession(now);
+                    currentPlace = e.PlaceId;
+                    joinedAt = now;
+                    reminderBase ??= now;
+                    LookUpName(e.PlaceId);
+                    Logger.WriteLine("LaunchFlow", $"Playing place {e.PlaceId}");
+                    break;
+
+                case LogEventKind.Left:
+                    EndSession(now);
+                    break;
+            }
+        }
+
+        // Break reminders are checked on a timer so they fire even if the log goes quiet.
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        timer.Tick += (_, _) =>
+        {
+            if (settings.BreakReminderMinutes <= 0 || reminderBase is null || currentPlace == 0 || reminder is not null)
+                return;
+
+            TimeSpan played = DateTime.UtcNow - reminderBase.Value;
+            if (played < nextReminder)
+                return;
+
+            string game = names.TryGetValue(currentPlace, out string? n) ? n : "Roblox";
+            reminder = new BreakReminderWindow(game, played);
+            reminder.Closed += (_, _) =>
+            {
+                // "Remind me later" = 15 more minutes; otherwise a full interval from now.
+                nextReminder = played + (reminder!.Snoozed ? TimeSpan.FromMinutes(15) : TimeSpan.FromMinutes(settings.BreakReminderMinutes));
+                reminder = null;
+            };
+            reminder.Show();
+        };
+        timer.Start();
+
+        using var cts = new CancellationTokenSource();
+        Task watcher = new RobloxLogWatcher().WatchAsync(Paths.RobloxLogs, launchedUtc, OnEvent, cts.Token);
+
+        try
+        {
+            await RobloxProcess.WaitForExitAsync(roblox, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Logger.WriteException("LaunchFlow::Wait", ex);
+        }
+        finally
+        {
+            timer.Stop();
+            reminder?.Close();
+            cts.Cancel();
+
+            try { await watcher; }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { Logger.WriteException("LaunchFlow::LogWatcher", ex); }
+
+            EndSession(DateTime.UtcNow);
+            Logger.WriteLine("LaunchFlow", "Roblox closed");
         }
     }
 
