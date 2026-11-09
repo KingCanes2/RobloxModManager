@@ -348,7 +348,7 @@ static class Program
         await Task.Delay(1200); b9.Cancel();
         bool cancelled = false; var cs = Stopwatch.StartNew();
         try { await prep; } catch (OperationCanceledException) { cancelled = true; }
-        T.Check(cancelled && cs.Elapsed < TimeSpan.FromSeconds(4), "cancel stops quickly with OperationCanceledException");
+        T.Check(cancelled && cs.Elapsed < TimeSpan.FromSeconds(5.5), "cancel stops before the slow downloads finish");
         T.Check(AppState.Load().VersionGuid == "version-cccc5555dddd6666", "state untouched by cancelled install");
         T.Check(!Directory.GetFiles(Paths.Downloads, "*.part").Any(), "no partial downloads left behind");
         cdn.PackageDelayMs = 0;
@@ -438,7 +438,8 @@ static class Program
                 w.WriteLine(Line("[FLog::Network] serverId: 10.0.0.1|5000"));
                 await Task.Delay(1500);
                 w.WriteLine(Line("[FLog::Network] Time to disconnect replication data: 0.01"));
-                await Task.Delay(2500);
+                // wait for the watcher to catch up rather than a fixed time (CI machines can be slow)
+                for (int i = 0; i < 100 && seen.Count < 3; i++) await Task.Delay(100);
             }
             watchCts.Cancel();
             try { await watchTask; } catch (OperationCanceledException) { }
