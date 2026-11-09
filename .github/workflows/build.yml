@@ -14,7 +14,13 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Run core tests
-        run: dotnet run --project tests/CoreTests -c Release
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet run --project tests/CoreTests -c Release | tee test-output.txt
+          status=${PIPESTATUS[0]}
+          grep "FAIL" test-output.txt | sed 's/^ *FAIL */::error title=Test failed::/' || true
+          exit $status
 
   build-windows:
     runs-on: windows-latest
