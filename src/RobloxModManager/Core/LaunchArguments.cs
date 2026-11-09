@@ -59,6 +59,33 @@ public sealed class LaunchArguments
     /// <summary>
     /// Roblox links carry a launch timestamp; refresh it so a link that sat in the browser for a while still works.
     /// </summary>
+    /// <summary>
+    /// Finds the game's place ID in a launch link. Website links carry it URL-encoded inside the
+    /// PlaceLauncher URL (placeId%3D123), app links as roblox://placeId=123 or ...?placeId=123.
+    /// </summary>
+    public static long? ExtractPlaceId(string robloxArguments)
+    {
+        string text = robloxArguments;
+
+        for (int i = 0; i < 3; i++)
+        {
+            var match = Regex.Match(text, @"placeId=(\d{1,19})", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (match.Success && long.TryParse(match.Groups[1].Value, out long placeId) && placeId > 0)
+                return placeId;
+
+            string decoded;
+            try { decoded = Uri.UnescapeDataString(text.Replace('+', ' ')); }
+            catch (UriFormatException) { break; }
+
+            if (decoded == text)
+                break;
+
+            text = decoded;
+        }
+
+        return null;
+    }
+
     public static string RefreshLaunchTime(string robloxArguments)
     {
         return Regex.Replace(robloxArguments, @"launchtime:\d+", $"launchtime:{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}", RegexOptions.IgnoreCase);

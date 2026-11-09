@@ -24,7 +24,8 @@ public static class ModManager
         string backupDirectory,
         IReadOnlyCollection<string> previousManifest,
         Func<string, bool>? shouldSkip,
-        CancellationToken ct)
+        CancellationToken ct,
+        IReadOnlyDictionary<string, string>? overrides = null)
     {
         const string ident = "ModManager::Apply";
         var result = new ModApplyResult();
@@ -34,11 +35,18 @@ public static class ModManager
         var previous = new HashSet<string>(previousManifest, StringComparer.OrdinalIgnoreCase);
         var wanted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (string file in Directory.EnumerateFiles(modsDirectory, "*", SearchOption.AllDirectories))
+        // relative path -> file to copy. Overrides (for example a game profile's flags) replace or add entries.
+        var sources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string path in Directory.EnumerateFiles(modsDirectory, "*", SearchOption.AllDirectories))
+            sources[Path.GetRelativePath(modsDirectory, path).Replace('\\', '/')] = path;
+
+        if (overrides is not null)
+            foreach (var (relativePath, source) in overrides)
+                sources[relativePath.Replace('\\', '/')] = source;
+
+        foreach (var (relative, file) in sources)
         {
             ct.ThrowIfCancellationRequested();
-
-            string relative = Path.GetRelativePath(modsDirectory, file).Replace('\\', '/');
 
             if (IsIgnored(relative) || (shouldSkip?.Invoke(relative) ?? false))
                 continue;

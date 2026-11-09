@@ -88,6 +88,9 @@ sealed class MockCdn : IDisposable
             byte[]? body = null;
 
             if (path == "/versionStudio") body = Encoding.ASCII.GetBytes("version-012732894899482c");
+            else if (path == "/universes/v1/places/606849621/universe") body = Encoding.UTF8.GetBytes("{\"universeId\":994732206}");
+            else if (path == "/v1/games" && ctx.Request.QueryString["universeIds"] == "994732206")
+                body = Encoding.UTF8.GetBytes("{\"data\":[{\"id\":994732206,\"name\":\"Jailbreak\"}]}");
             else if (path == "/v2/client-version/WindowsPlayer")
                 body = Encoding.UTF8.GetBytes($"{{\"version\":\"{Version}\",\"clientVersionUpload\":\"{VersionGuid}\",\"bootstrapperVersion\":\"1, 0, 0, 1\"}}");
             else if (path == $"/{VersionGuid}-rbxPkgManifest.txt") body = Manifest();
@@ -128,12 +131,12 @@ static class Program
         ["WebView2RuntimeInstaller.zip"] = MockCdn.Zip(("MicrosoftEdgeWebview2Setup.exe", "x")),
     };
 
-    static RobloxBootstrapper NewRun(MockCdn cdn, AppSettings? settings = null, FakeUi? ui = null)
+    static RobloxBootstrapper NewRun(MockCdn cdn, AppSettings? settings = null, FakeUi? ui = null, GameProfile? profile = null)
     {
         settings ??= new AppSettings();
         var state = AppState.Load(); // mimic a fresh process: always reload from disk
         var dep = new Deployment(settings.Channel, new Dictionary<string, int> { [cdn.Url] = 0 }, new[] { cdn.Url });
-        return new RobloxBootstrapper(settings, state, dep, ui ?? new FakeUi());
+        return new RobloxBootstrapper(settings, state, dep, ui ?? new FakeUi(), profile);
     }
 
     static async Task<int> Main()
@@ -383,6 +386,145 @@ static class Program
         T.Check(!File.Exists(oldLog) && File.Exists(newLog), "only logs older than the limit are deleted");
         Cleaner.Run(new AppSettings { CleanerAge = CleanerAge.Never });
         T.Check(File.Exists(newLog), "'Never' deletes nothing");
+
+
+        // ------------------------------------------------------------------
+        T.Section("Place IDs from launch links");
+        string webLink = "roblox-player:1+launchmode:play+gameinfo:AbC123+launchtime:1700000000000+placelauncherurl:https%3A%2F%2Fassetgame.roblox.com%2Fgame%2FPlaceLauncher.ashx%3Frequest%3DRequestGame%26browserTrackerId%3D123%26placeId%3D606849621%26isPlayTogetherGame%3Dfalse+browsertrackerid:123+robloxLocale:en_us+gameLocale:en_us";
+        T.Check(LaunchArguments.ExtractPlaceId(webLink) == 606849621, "website link (URL-encoded) -> place ID");
+        T.Check(LaunchArguments.ExtractPlaceId("roblox://placeId=920587237") == 920587237, "roblox://placeId= link");
+        T.Check(LaunchArguments.ExtractPlaceId("roblox://experiences/start?placeId=123&launchData=x") == 123, "experiences/start link");
+        T.Check(LaunchArguments.ExtractPlaceId("--app") is null, "no place ID in --app");
+        T.Check(RobloxGames.ParsePlaceInput("https://www.roblox.com/games/920587237/Adopt-Me") == 920587237, "game page URL");
+        T.Check(RobloxGames.ParsePlaceInput("https://www.roblox.com/es/games/5/x") == 5, "localised game page URL");
+        T.Check(RobloxGames.ParsePlaceInput(" 1818 ") == 1818, "plain number");
+        T.Check(RobloxGames.ParsePlaceInput("hello") is null, "junk -> null");
+
+        // ------------------------------------------------------------------
+        T.Section("Roblox log watcher");
+        string Line(string msg) => "2026-11-09T07:00:00.000Z,10.5,1a2b,6 " + msg;
+        string job1 = "11111111-2222-3333-4444-555555555555", job2 = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        var events = new RobloxLogWatcher().ParseLines(new[]
+        {
+            Line("[FLog::Output] Something unrelated"),
+            Line($"[FLog::Output] ! Joining game '{job1}' place 100 at 10.0.0.1"),
+            Line("[FLog::Network] serverId: 10.0.0.1|5000"),
+            Line($"[FLog::Output] ! Joining game '{job2}' place 200 at 10.0.0.2"),   // teleport
+            Line("[FLog::Network] serverId: 10.0.0.2|5001"),
+            Line("[FLog::Network] Time to disconnect replication data: 0.01"),
+            Line("[FLog::SingleSurfaceApp] leaveUGCGameInternal"),
+            "continuation line without a timestamp",
+        }).ToList();
+        string seq = string.Join(",", events.Select(e => $"{e.Kind}:{e.PlaceId}"));
+        T.Check(seq == "Joining:100,Joined:100,Left:100,Joined:200,Left:200", $"join, teleport, leave parsed in order ({seq})");
+        T.Check(events[1].JobId == job1 && events[3].JobId == job2, "job IDs kept");
+        var failed = new RobloxLogWatcher().ParseLines(new[] { Line($"[FLog::Output] ! Joining game '{job1}' place 100 at 1.1.1.1"), Line("[FLog::SingleSurfaceApp] leaveUGCGameInternal") }).ToList();
+        T.Check(failed.Count == 1 && failed[0].Kind == LogEventKind.Joining, "cancelled join produces no session");
+
+        // live tailing of a growing log file
+        Directory.CreateDirectory(Paths.RobloxLogs);
+        foreach (var f in Directory.GetFiles(Paths.RobloxLogs)) File.Delete(f);
+        var launched = DateTime.UtcNow;
+        var seen = new List<LogEvent>();
+        using (var watchCts = new CancellationTokenSource())
+        {
+            var watchTask = new RobloxLogWatcher().WatchAsync(Paths.RobloxLogs, launched, e => { lock (seen) seen.Add(e); }, watchCts.Token);
+            await Task.Delay(1200);
+            string logPath = Path.Combine(Paths.RobloxLogs, "0.600.0.1_20261109T070000Z_Player_ABC12_last.log");
+            using (var w = new StreamWriter(new FileStream(logPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true })
+            {
+                w.WriteLine(Line($"[FLog::Output] ! Joining game '{job1}' place 100 at 10.0.0.1"));
+                await Task.Delay(1500);
+                w.WriteLine(Line("[FLog::Network] serverId: 10.0.0.1|5000"));
+                await Task.Delay(1500);
+                w.WriteLine(Line("[FLog::Network] Time to disconnect replication data: 0.01"));
+                await Task.Delay(2500);
+            }
+            watchCts.Cancel();
+            try { await watchTask; } catch (OperationCanceledException) { }
+        }
+        T.Check(string.Join(",", seen.Select(e => e.Kind)) == "Joining,Joined,Left", "follows a log file as Roblox writes it");
+        T.Check(RobloxLogWatcher.FindLog(Paths.RobloxLogs, DateTime.UtcNow.AddHours(1)) is null, "older logs are not picked up");
+
+        // ------------------------------------------------------------------
+        T.Section("Play history");
+        var t0 = DateTime.UtcNow.AddDays(-1);
+        PlayHistory.Append(new PlaySession { PlaceId = 100, StartUtc = t0, EndUtc = t0.AddMinutes(90) });
+        PlayHistory.Append(new PlaySession { PlaceId = 100, StartUtc = t0.AddHours(3), EndUtc = t0.AddHours(3).AddMinutes(30) });
+        PlayHistory.Append(new PlaySession { PlaceId = 200, StartUtc = t0, EndUtc = t0.AddMinutes(20) });
+        PlayHistory.Append(new PlaySession { PlaceId = 300, StartUtc = t0, EndUtc = t0.AddSeconds(10) }); // too short
+        var hist = PlayHistory.Load();
+        var per = hist.PerGame();
+        T.Check(hist.Sessions.Count == 3, "sessions under 30 seconds are dropped");
+        T.Check(per[0].PlaceId == 100 && per[0].Total == TimeSpan.FromMinutes(120) && per[0].Sessions == 2, "totals per game, most played first");
+        T.Check(per[1].Name == "Place 200", "unknown names fall back to the place ID");
+        T.Check(hist.TotalSince(t0.AddMinutes(60)) == TimeSpan.FromMinutes(60), "time since a date counts partial sessions");
+        T.Check(hist.DayStreak(DateTime.Now) >= 1, "day streak counts recent play");
+        T.Check(PlayHistory.Format(TimeSpan.FromMinutes(135)) == "2 h 15 min" && PlayHistory.Format(TimeSpan.FromSeconds(20)) == "under a minute", "durations formatted");
+        string? gameName = await RobloxGames.GetNameAsync(606849621, default, cdn.Url, cdn.Url);
+        T.Check(gameName == "Jailbreak", "game name looked up from place ID");
+        T.Check(await RobloxGames.GetNameAsync(42, default, cdn.Url, cdn.Url) is null, "unknown place -> null, no crash");
+
+        // ------------------------------------------------------------------
+        T.Section("Game profiles");
+        string vNow = Paths.VersionDirectory(cdn.VersionGuid);
+        string vFlags = Path.Combine(vNow, "ClientSettings", "ClientAppSettings.json");
+        var baseFlags = new FastFlagManager(); baseFlags.Load();
+        baseFlags.Set("DFIntTaskSchedulerTargetFps", "144"); baseFlags.Set("FFlagShared", "False"); baseFlags.Save();
+        var profile = new GameProfile { PlaceId = 100, Name = "Test game", Flags = new() { ["FFlagShared"] = "True", ["FIntProfileOnly"] = "7" } };
+        await NewRun(cdn, profile: profile).PrepareAsync();
+        string pf = Read(vFlags);
+        T.Check(pf.Contains("\"FIntProfileOnly\": \"7\"") && pf.Contains("\"FFlagShared\": \"True\"") && pf.Contains("\"DFIntTaskSchedulerTargetFps\": \"144\""), "profile flags merged over normal flags");
+        T.Check(!Read(Paths.FlagsFile).Contains("FIntProfileOnly"), "your saved flags are not changed by a profile");
+        await NewRun(cdn).PrepareAsync();
+        string nf = Read(vFlags);
+        T.Check(!nf.Contains("FIntProfileOnly") && nf.Contains("\"FFlagShared\": \"False\""), "next normal launch goes back to normal flags");
+        File.WriteAllText(modFile, "MOD SOUND");
+        await NewRun(cdn).PrepareAsync();
+        string ouch = Path.Combine(vNow, "content", "sounds", "ouch.ogg");
+        T.Check(Read(ouch) == "MOD SOUND", "mod in place before no-mods profile");
+        await NewRun(cdn, profile: new GameProfile { PlaceId = 5, ApplyMods = false }).PrepareAsync();
+        T.Check(Read(ouch).StartsWith("ORIGINAL SOUND"), "profile with mods off restores originals");
+        T.Check(File.Exists(vFlags), "flags still applied in a no-mods profile");
+        await NewRun(cdn).PrepareAsync();
+        T.Check(Read(ouch) == "MOD SOUND", "mods come back on the next normal launch");
+        var original = new AppSettings { ApplyMods = true };
+        var safe = original.Clone(); safe.ApplyMods = false; safe.UseFastFlagManager = false;
+        T.Check(original.ApplyMods && original.UseFastFlagManager, "safe-mode copy doesn't change saved settings");
+        await NewRun(cdn, safe).PrepareAsync();
+        T.Check(Read(ouch).StartsWith("ORIGINAL SOUND") && !File.Exists(vFlags), "safe mode launches without mods and flags");
+        await NewRun(cdn).PrepareAsync();
+        T.Check(Read(ouch) == "MOD SOUND" && File.Exists(vFlags), "everything returns after safe mode");
+
+        // ------------------------------------------------------------------
+        T.Section("Smart mod drop");
+        var index = ModPlacer.IndexVersion(vNow);
+        string dropMods = Path.Combine(root, "drop-mods"); Directory.CreateDirectory(dropMods);
+        string dropDir = Path.Combine(root, "drop-src"); Directory.CreateDirectory(dropDir);
+        string dropped = Path.Combine(dropDir, "ouch.ogg"); File.WriteAllText(dropped, "MY OUCH");
+        var p1 = ModPlacer.PlaceFile(dropped, index, dropMods);
+        T.Check(p1.Outcome == PlacementOutcome.Placed && p1.RelativePath == "content/sounds/ouch.ogg" && Read(Path.Combine(dropMods, "content", "sounds", "ouch.ogg")) == "MY OUCH", "single file placed where Roblox keeps it");
+        Directory.CreateDirectory(Path.Combine(vNow, "ExtraContent", "x")); File.WriteAllText(Path.Combine(vNow, "ExtraContent", "x", "a.ogg"), "dupe");
+        index = ModPlacer.IndexVersion(vNow);
+        string droppedA = Path.Combine(dropDir, "a.ogg"); File.WriteAllText(droppedA, "A");
+        var p2 = ModPlacer.PlaceFile(droppedA, index, dropMods);
+        T.Check(p2.Outcome == PlacementOutcome.Ambiguous && p2.Candidates[0] == "content/sounds/sub/dir/a.ogg", "duplicate names reported, content folder ranked first");
+        string droppedX = Path.Combine(dropDir, "nothing.png"); File.WriteAllText(droppedX, "x");
+        T.Check(ModPlacer.PlaceFile(droppedX, index, dropMods).Outcome == PlacementOutcome.NotFound, "unknown file names are reported, not guessed");
+        T.Check(!index.ContainsKey("RobloxPlayerBeta.exe"), "the game exe is never offered as a target");
+        string pack = Path.Combine(dropDir, "pack.zip");
+        File.WriteAllBytes(pack, MockCdn.Zip(
+            ("MyPack/content/textures/Cursor.png", "CURSOR"),
+            ("MyPack/README.txt", "readme"),
+            ("MyPack/ouch.ogg", "LOOSE OUCH"),
+            ("__MACOSX/MyPack/._ouch.ogg", "junk"),
+            ("MyPack/content/../../../escape.txt", "evil")));
+        var packResults = ModPlacer.PlaceZip(pack, index, dropMods);
+        T.Check(Read(Path.Combine(dropMods, "content", "textures", "Cursor.png")) == "CURSOR", "zip wrapper folder detected, layout kept");
+        T.Check(Read(Path.Combine(dropMods, "content", "sounds", "ouch.ogg")) == "LOOSE OUCH", "loose file in a zip placed by name");
+        T.Check(!File.Exists(Path.Combine(dropMods, "README.txt")) && !packResults.Any(r => r.Source.Contains("__MACOSX")), "readme and Mac junk skipped");
+        T.Check(!File.Exists(Path.Combine(root, "escape.txt")) && packResults.Any(r => r.Outcome == PlacementOutcome.Failed), "zip entries escaping the mods folder are refused");
+        T.Check(ModPlacer.FindRoot(new[] { "a/b/content/x.png", "a/content/y.png" }) == "a/", "shallowest Roblox-looking root wins");
 
         Console.WriteLine($"\n{T.Passed} passed, {T.Failed} failed");
         try { Directory.Delete(root, true); } catch { }

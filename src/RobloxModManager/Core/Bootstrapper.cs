@@ -48,19 +48,24 @@ public sealed class RobloxBootstrapper : IDisposable
     private readonly AppState _state;
     private readonly Deployment _deployment;
     private readonly IBootstrapperUi? _ui;
+    private readonly GameProfile? _profile;
     private readonly CancellationTokenSource _cts = new();
 
     private long _workDone;
     private long _workTotal = 1;
     private int _lastPercent = -2;
 
-    public RobloxBootstrapper(AppSettings settings, AppState state, Deployment deployment, IBootstrapperUi? ui = null)
+    public RobloxBootstrapper(AppSettings settings, AppState state, Deployment deployment, IBootstrapperUi? ui = null, GameProfile? profile = null)
     {
         _settings = settings;
         _state = state;
         _deployment = deployment;
         _ui = ui;
+        _profile = profile;
     }
+
+    /// <summary>Mods are on unless turned off in settings or by the game's profile.</summary>
+    private bool ModsEnabled => _settings.ApplyMods && (_profile?.ApplyMods ?? true);
 
     public string VersionDirectory { get; private set; } = "";
     public string ExecutablePath => Path.Combine(VersionDirectory, PlayerExecutable);
@@ -459,7 +464,7 @@ public sealed class RobloxBootstrapper : IDisposable
     private bool ShouldSkipMod(string relative)
     {
         bool isFlagsFile = relative.Equals("ClientSettings/ClientAppSettings.json", StringComparison.OrdinalIgnoreCase);
-        return isFlagsFile ? !_settings.UseFastFlagManager : !_settings.ApplyMods;
+        return isFlagsFile ? !_settings.UseFastFlagManager : !ModsEnabled;
     }
 
     private void ApplyModifications(CancellationToken ct)
@@ -471,19 +476,42 @@ public sealed class RobloxBootstrapper : IDisposable
         if (!File.Exists(Path.Combine(Paths.Mods, "AppSettings.xml")))
             File.WriteAllText(Path.Combine(VersionDirectory, "AppSettings.xml"), AppSettingsXml);
 
-        if (_settings.ApplyMods)
+        if (ModsEnabled)
         {
             int families = CustomFont.GenerateFamilies(VersionDirectory);
             if (families > 0)
                 Logger.WriteLine(Ident, $"Custom font: generated {families} font families");
         }
 
-        var result = ModManager.Apply(VersionDirectory, Paths.Mods, Paths.ModBackups, _state.ModManifest, ShouldSkipMod, ct);
+        var result = ModManager.Apply(VersionDirectory, Paths.Mods, Paths.ModBackups, _state.ModManifest, ShouldSkipMod, ct, BuildProfileOverrides());
 
         _state.ModManifest = result.Applied;
         _state.Save();
 
         Logger.WriteLine(Ident, $"Mods: {result.Copied} copied, {result.Restored} restored, {result.Failures.Count} failed");
+    }
+
+    public static string ProfileFlagsFile => Path.Combine(Paths.Base, "Generated", "ClientAppSettings.json");
+
+    /// <summary>
+    /// With a game profile, Roblox gets your normal flags plus the profile's (the profile wins on a clash),
+    /// written to a generated file that replaces the mods-folder copy for this launch only.
+    /// </summary>
+    private IReadOnlyDictionary<string, string>? BuildProfileOverrides()
+    {
+        if (_profile is null || _profile.Flags.Count == 0)
+            return null;
+
+        var flags = new FastFlagManager();
+        flags.Load();
+
+        foreach (var (name, value) in _profile.Flags)
+            flags.Set(name, value);
+
+        JsonFile.Save(ProfileFlagsFile, new SortedDictionary<string, string>(flags.Flags, StringComparer.Ordinal));
+        Logger.WriteLine(Ident, $"Using game profile '{_profile.Name}' ({_profile.Flags.Count} extra flags)");
+
+        return new Dictionary<string, string> { ["ClientSettings/ClientAppSettings.json"] = ProfileFlagsFile };
     }
 
     private static void EnsureModsReadme()

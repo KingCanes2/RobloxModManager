@@ -8,6 +8,17 @@ public enum AppTheme { System, Light, Dark }
 
 public enum CleanerAge { Never, OneDay, OneWeek, TwoWeeks, OneMonth, TwoMonths }
 
+/// <summary>Settings that switch on automatically when you join one particular game.</summary>
+public class GameProfile
+{
+    public long PlaceId { get; set; }
+    public string Name { get; set; } = "";
+    public bool ApplyMods { get; set; } = true;
+
+    /// <summary>Fast flags added on top of your normal flags (same name = this value wins) while this game is played.</summary>
+    public Dictionary<string, string> Flags { get; set; } = new(StringComparer.Ordinal);
+}
+
 public class CustomIntegration
 {
     public string Name { get; set; } = "";
@@ -35,6 +46,21 @@ public class AppSettings
     public bool CleanAppLogs { get; set; } = true;
 
     public List<CustomIntegration> CustomIntegrations { get; set; } = new();
+
+    public List<GameProfile> GameProfiles { get; set; } = new();
+
+    /// <summary>Keep running in the background while Roblox is open to record time played per game.</summary>
+    public bool TrackPlaytime { get; set; } = true;
+
+    /// <summary>Show a reminder after this many minutes of continuous play. 0 turns it off.</summary>
+    public int BreakReminderMinutes { get; set; } = 0;
+
+    public GameProfile? FindProfile(long? placeId) =>
+        placeId is null ? null : GameProfiles.FirstOrDefault(p => p.PlaceId == placeId);
+
+    /// <summary>A copy that can be changed for one launch (safe mode) without touching the saved settings.</summary>
+    public AppSettings Clone() =>
+        System.Text.Json.JsonSerializer.Deserialize<AppSettings>(System.Text.Json.JsonSerializer.Serialize(this, JsonFile.Options), JsonFile.Options)!;
 
     public static AppSettings Load() => JsonFile.Load<AppSettings>(Paths.SettingsFile);
 
