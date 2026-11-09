@@ -1,0 +1,78 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.FastFlagsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RobloxModManager.UI.Controls">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Fast flags"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
+                   Text="Change how Roblox's engine renders and behaves. Flags are applied when Roblox starts."/>
+
+        <Border Style="{StaticResource InfoBar}">
+            <TextBlock TextWrapping="Wrap"
+                       Text="Roblox only accepts flags on its allowlist and ignores the rest. If a game misbehaves after a change, turn the manager off or reset everything below."/>
+        </Border>
+
+        <ctl:OptionControl Header="Let Roblox Mod Manager manage fast flags"
+                           Description="Turn off to start Roblox without any of the flags on this page or in the editor.">
+            <CheckBox x:Name="ManagerToggle" Style="{StaticResource ToggleSwitch}" Click="Manager_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Fast flag editor" Description="Add, change or import flags by name. For advanced users.">
+            <Button Content="Open editor" Click="Editor_Click"/>
+        </ctl:OptionControl>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Rendering and graphics"/>
+
+        <ctl:OptionControl Header="Rendering mode" Description="The graphics API Roblox uses. Automatic lets Roblox pick.">
+            <ComboBox x:Name="RenderingModeBox" SelectionChanged="RenderingMode_Changed">
+                <ComboBoxItem Content="Automatic"/>
+                <ComboBoxItem Content="Direct3D 11"/>
+                <ComboBoxItem Content="Vulkan"/>
+            </ComboBox>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Anti-aliasing (MSAA)" Description="Smooths jagged edges. Higher values cost more performance.">
+            <ComboBox x:Name="MsaaBox" SelectionChanged="Msaa_Changed">
+                <ComboBoxItem Content="Automatic"/>
+                <ComboBoxItem Content="1x"/>
+                <ComboBoxItem Content="2x"/>
+                <ComboBoxItem Content="4x"/>
+            </ComboBox>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Keep full quality with display scaling"
+                           Description="Roblox lowers rendering quality when Windows display scaling is above 100%. This stops that.">
+            <CheckBox x:Name="ScalingToggle" Style="{StaticResource ToggleSwitch}" Click="Scaling_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Exclusive fullscreen with Alt+Enter"
+                           Description="Alt+Enter switches to exclusive fullscreen, which can lower input delay.">
+            <CheckBox x:Name="ExclusiveFullscreenToggle" Style="{StaticResource ToggleSwitch}" Click="ExclusiveFullscreen_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Fixed quality level"
+                           Description="Locks Roblox's automatic quality to one level, from 1 to 21. Off lets Roblox adjust it as you play.">
+            <StackPanel Orientation="Horizontal">
+                <Slider x:Name="FrmSlider" Width="160" Minimum="1" Maximum="21" TickFrequency="1" VerticalAlignment="Center"
+                        ValueChanged="Frm_ValueChanged"/>
+                <TextBlock x:Name="FrmValue" Width="28" Margin="10,0,14,0" VerticalAlignment="Center" TextAlignment="Right"/>
+                <CheckBox x:Name="FrmToggle" Style="{StaticResource ToggleSwitch}" Click="FrmToggle_Click"/>
+            </StackPanel>
+        </ctl:OptionControl>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Geometry"/>
+
+        <ctl:OptionControl Header="Mesh detail"
+                           Description="How detailed distant meshes look. Lower settings can make some meshes disappear.">
+            <StackPanel Orientation="Horizontal">
+                <Slider x:Name="MeshSlider" Width="160" Minimum="0" Maximum="3" TickFrequency="1" VerticalAlignment="Center"
+                        ValueChanged="Mesh_ValueChanged"/>
+                <TextBlock x:Name="MeshValue" Width="56" Margin="10,0,14,0" VerticalAlignment="Center"/>
+                <CheckBox x:Name="MeshToggle" Style="{StaticResource ToggleSwitch}" Click="MeshToggle_Click"/>
+            </StackPanel>
+        </ctl:OptionControl>
+
+        <Button Content="Reset all fast flags" Style="{StaticResource DangerButton}" HorizontalAlignment="Left"
+                Margin="0,14,0,0" Click="Reset_Click"/>
+    </StackPanel>
+</UserControl>

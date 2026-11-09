@@ -1,0 +1,47 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.AboutPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RobloxModManager.UI.Controls">
+    <StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+            <Image Source="/Assets/logo.png" Width="64" Height="64" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <StackPanel Margin="18,0,0,0" VerticalAlignment="Center">
+                <TextBlock x:Name="AppNameText" Style="{StaticResource PageTitle}"/>
+                <TextBlock x:Name="VersionText" Style="{StaticResource SecondaryText}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource SecondaryText}" FontSize="14" LineHeight="21"
+                   Text="A launcher for Roblox that keeps it up to date, applies your mods and fast flags on every launch, and puts Roblox's settings in one place."/>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Credits"/>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <TextBlock TextWrapping="Wrap" LineHeight="20"
+                           Text="Built on the design of Fishstrap by returnrqt and Bloxstrap by pizzaboxer and contributors, both released under the MIT License. Roblox package handling follows Roblox Studio Mod Manager by MaximumADHD (MIT License)."/>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Button Content="Fishstrap on GitHub" Tag="https://github.com/fishstrap/fishstrap" Click="Link_Click"/>
+                    <Button Content="Bloxstrap on GitHub" Tag="https://github.com/bloxstraplabs/bloxstrap" Margin="8,0,0,0" Click="Link_Click"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Style="{StaticResource SecondaryText}" FontSize="12.5" Margin="0,4,0,0"
+                   Text="Not affiliated with, or endorsed by, Roblox Corporation."/>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Troubleshooting"/>
+
+        <ctl:OptionControl Header="Logs" Description="Useful when something goes wrong. Include the latest log when asking for help.">
+            <Button Content="Open logs folder" Click="Logs_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Install folder" Description="Where Roblox, your mods and your settings are kept.">
+            <Button Content="Open folder" Click="InstallFolder_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl x:Name="UninstallOption" Header="Uninstall">
+            <Button Content="Uninstall..." Style="{StaticResource DangerButton}" Click="Uninstall_Click"/>
+        </ctl:OptionControl>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,27 @@
+<Window x:Class="RobloxModManager.UI.Uninstaller.UninstallerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource AppWindow}"
+        Width="500" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="28,26,28,22">
+            <TextBlock x:Name="HeadingText" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            <TextBlock x:Name="BodyText" Style="{StaticResource SecondaryText}" Margin="0,10,0,0" LineHeight="20"/>
+            <CheckBox x:Name="KeepDataBox" Content="Keep my mods and settings" IsChecked="True" Margin="0,20,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="{DynamicResource SidebarBrush}" Padding="24,14">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="UninstallButton" Content="Uninstall" MinWidth="96" Style="{StaticResource AccentButton}"
+                        Click="Uninstall_Click"/>
+                <Button Content="Cancel" MinWidth="96" Margin="8,0,0,0" IsCancel="True" IsDefault="True" Click="Cancel_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

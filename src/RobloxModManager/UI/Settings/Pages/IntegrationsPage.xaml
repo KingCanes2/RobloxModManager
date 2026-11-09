@@ -1,0 +1,63 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.IntegrationsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Integrations"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,8"
+                   Text="Start other programs alongside Roblox, such as an FPS counter, a macro tool or a recorder."/>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Custom integrations"/>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="New" MinWidth="80" Click="New_Click"/>
+                    <Button x:Name="DeleteButton" Content="Delete" MinWidth="80" Margin="8,0,0,0" Click="Delete_Click"/>
+                </StackPanel>
+                <ListBox x:Name="IntegrationList" Style="{StaticResource CardListBox}" Height="280"
+                         SelectionChanged="IntegrationList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="16,0,0,0" VerticalAlignment="Top">
+                <Grid>
+                    <TextBlock x:Name="EmptyText" Style="{StaticResource SecondaryText}" Margin="0,4"
+                               Text="Select an integration to edit it, or choose New to add one."/>
+
+                    <StackPanel x:Name="EditorPanel" Visibility="Collapsed">
+                        <TextBlock Text="Name" FontWeight="SemiBold"/>
+                        <TextBox x:Name="NameBox" Margin="0,6,0,14" TextChanged="Field_Changed"/>
+
+                        <TextBlock Text="Program" FontWeight="SemiBold"/>
+                        <Grid Margin="0,6,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="LocationBox" TextChanged="Field_Changed"/>
+                            <Button Grid.Column="1" Content="Browse..." Margin="8,0,0,0" Click="Browse_Click"/>
+                        </Grid>
+
+                        <TextBlock Text="Launch options" FontWeight="SemiBold"/>
+                        <TextBox x:Name="ArgsBox" Margin="0,6,0,4" TextChanged="Field_Changed"/>
+                        <TextBlock Style="{StaticResource SecondaryText}" FontSize="12.5"
+                                   Text="Passed to the program when it starts. Leave empty if you're not sure."/>
+
+                        <CheckBox x:Name="AutoCloseBox" Content="Close it when Roblox closes" Margin="0,16,0,0"
+                                  Click="Field_Changed"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </StackPanel>
+</UserControl>

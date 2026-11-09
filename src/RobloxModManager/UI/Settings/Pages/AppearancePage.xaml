@@ -1,0 +1,35 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.AppearancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RobloxModManager.UI.Controls">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Appearance"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
+                   Text="Choose how Roblox Mod Manager and its launch window look."/>
+
+        <ctl:OptionControl Header="Theme" Description="Follow your Windows setting, or always use light or dark.">
+            <ComboBox x:Name="ThemeBox" SelectionChanged="Theme_Changed">
+                <ComboBoxItem Content="Use Windows setting"/>
+                <ComboBoxItem Content="Light"/>
+                <ComboBoxItem Content="Dark"/>
+            </ComboBox>
+        </ctl:OptionControl>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Launch window"/>
+
+        <ctl:OptionControl Header="Style" Description="The window shown while Roblox updates and starts.">
+            <StackPanel Orientation="Horizontal">
+                <ComboBox x:Name="StyleBox" SelectionChanged="Style_Changed">
+                    <ComboBoxItem Content="Fluent"/>
+                    <ComboBoxItem Content="Classic"/>
+                    <ComboBoxItem Content="Terminal"/>
+                </ComboBox>
+                <Button Content="Preview" Margin="8,0,0,0" Click="Preview_Click"/>
+            </StackPanel>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Title" Description="The text in the launch window's title bar.">
+            <TextBox x:Name="TitleBox" Width="240" MaxLength="80" TextChanged="Title_TextChanged"/>
+        </ctl:OptionControl>
+    </StackPanel>
+</UserControl>

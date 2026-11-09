@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    End-to-end tests for the Core folder (download, verify, extract, mods, fast flags, settings).
+    They run against a local mock of Roblox's CDN, so they work on any OS and need no internet.
+    Run with:  dotnet run, followed by the project option pointing at tests/CoreTests (see README).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>CoreTests</RootNamespace>
+    <NoWarn>CA1416</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/RobloxModManager/Core/**/*.cs" />
+  </ItemGroup>
+</Project>

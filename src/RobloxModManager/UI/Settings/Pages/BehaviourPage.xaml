@@ -1,0 +1,41 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.BehaviourPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RobloxModManager.UI.Controls">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Behaviour"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
+                   Text="Decide what happens when Roblox launches."/>
+
+        <ctl:OptionControl Header="Ask before opening a second game"
+                           Description="If Roblox is already open, confirm first, since joining another game closes the one you're in.">
+            <CheckBox x:Name="ConfirmToggle" Style="{StaticResource ToggleSwitch}" Click="Confirm_Click"/>
+        </ctl:OptionControl>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Cleaner"/>
+
+        <ctl:OptionControl Header="Delete old files after"
+                           Description="Files older than this are removed each time Roblox launches.">
+            <ComboBox x:Name="AgeBox" SelectionChanged="Age_Changed">
+                <ComboBoxItem Content="Never"/>
+                <ComboBoxItem Content="1 day"/>
+                <ComboBoxItem Content="1 week"/>
+                <ComboBoxItem Content="2 weeks"/>
+                <ComboBoxItem Content="1 month"/>
+                <ComboBoxItem Content="2 months"/>
+            </ComboBox>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Roblox cache" Description="Downloaded game assets. Games download again whatever they need.">
+            <CheckBox x:Name="CacheToggle" Style="{StaticResource ToggleSwitch}" Click="Cleaner_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Roblox logs" Description="Log files Roblox writes while you play.">
+            <CheckBox x:Name="RobloxLogsToggle" Style="{StaticResource ToggleSwitch}" Click="Cleaner_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Roblox Mod Manager logs" Description="Log files this app writes.">
+            <CheckBox x:Name="AppLogsToggle" Style="{StaticResource ToggleSwitch}" Click="Cleaner_Click"/>
+        </ctl:OptionControl>
+    </StackPanel>
+</UserControl>

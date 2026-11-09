@@ -1,0 +1,36 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{31C033D7-BAD3-4D6E-8C5F-CADB94C09EE0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RobloxModManager", "src\RobloxModManager\RobloxModManager.csproj", "{A3E3DD9A-2B21-4812-8D94-0E7271F8C693}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1AB58DDA-1441-4DBF-B847-8AB5FC3B0D92}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreTests", "tests\CoreTests\CoreTests.csproj", "{A85F9F00-7922-4203-9940-77504CA00253}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A3E3DD9A-2B21-4812-8D94-0E7271F8C693}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3E3DD9A-2B21-4812-8D94-0E7271F8C693}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3E3DD9A-2B21-4812-8D94-0E7271F8C693}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3E3DD9A-2B21-4812-8D94-0E7271F8C693}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A85F9F00-7922-4203-9940-77504CA00253}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A85F9F00-7922-4203-9940-77504CA00253}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A85F9F00-7922-4203-9940-77504CA00253}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A85F9F00-7922-4203-9940-77504CA00253}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A3E3DD9A-2B21-4812-8D94-0E7271F8C693} = {31C033D7-BAD3-4D6E-8C5F-CADB94C09EE0}
+		{A85F9F00-7922-4203-9940-77504CA00253} = {1AB58DDA-1441-4DBF-B847-8AB5FC3B0D92}
+	EndGlobalSection
+EndGlobal

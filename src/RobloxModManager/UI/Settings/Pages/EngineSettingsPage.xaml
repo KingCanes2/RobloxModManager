@@ -1,0 +1,80 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.EngineSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RobloxModManager.UI.Controls">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Engine settings"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
+                   Text="Change the settings Roblox keeps for every game, such as graphics quality and the frame rate limit."/>
+
+        <Border x:Name="MissingBanner" Style="{StaticResource InfoBar}" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock TextWrapping="Wrap"
+                           Text="Roblox hasn't saved its settings on this PC yet. Play Roblox once, or create a settings file now."/>
+                <Button Content="Create settings file" HorizontalAlignment="Left" Margin="0,10,0,0" Click="Create_Click"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel x:Name="SettingsPanel">
+            <Border Style="{StaticResource InfoBar}">
+                <TextBlock TextWrapping="Wrap"
+                           Text="Close Roblox before saving. Roblox writes these settings when it exits, which would undo your changes."/>
+            </Border>
+
+            <ctl:OptionControl Header="Lock these settings"
+                               Description="Stops Roblox from changing them. Turn this off to change settings inside Roblox again.">
+                <CheckBox x:Name="ReadOnlyToggle" Style="{StaticResource ToggleSwitch}" Click="ReadOnly_Click"/>
+            </ctl:OptionControl>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="Rendering and graphics"/>
+
+            <ctl:OptionControl Header="Graphics quality"
+                               Description="1 is the lowest and 10 the highest. Automatic lets Roblox adjust it.">
+                <StackPanel Orientation="Horizontal">
+                    <Slider x:Name="QualitySlider" Width="180" Minimum="0" Maximum="10" TickFrequency="1"
+                            VerticalAlignment="Center" ValueChanged="Quality_ValueChanged"/>
+                    <TextBlock x:Name="QualityValue" Width="74" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </ctl:OptionControl>
+
+            <ctl:OptionControl Header="Frame rate limit"
+                               Description="Roblox's FPS cap, from 1 to 10,000. Going above 240 isn't recommended.">
+                <TextBox x:Name="FramerateBox" Width="110" TextChanged="Framerate_TextChanged"/>
+            </ctl:OptionControl>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="User interface"/>
+
+            <ctl:OptionControl Header="Background transparency"
+                               Description="Lower values make menu backgrounds more solid. 100% is Roblox's default.">
+                <StackPanel Orientation="Horizontal">
+                    <Slider x:Name="TransparencySlider" Width="180" Minimum="0" Maximum="1" TickFrequency="0.1"
+                            VerticalAlignment="Center" ValueChanged="Transparency_ValueChanged"/>
+                    <TextBlock x:Name="TransparencyValue" Width="74" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </ctl:OptionControl>
+
+            <ctl:OptionControl Header="Reduced motion" Description="Turns off animations in Roblox's menus.">
+                <CheckBox x:Name="ReducedMotionToggle" Style="{StaticResource ToggleSwitch}" Click="ReducedMotion_Click"/>
+            </ctl:OptionControl>
+
+            <ctl:OptionControl Header="Text size" Description="How large text appears in Roblox's menus.">
+                <ComboBox x:Name="TextSizeBox" SelectionChanged="TextSize_Changed">
+                    <ComboBoxItem Content="Default"/>
+                    <ComboBoxItem Content="Large"/>
+                    <ComboBoxItem Content="Larger"/>
+                    <ComboBoxItem Content="Largest"/>
+                </ComboBox>
+            </ctl:OptionControl>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="Other"/>
+
+            <ctl:OptionControl Header="Mouse sensitivity" Description="How fast the camera turns in game, from 0.1 to 10.">
+                <TextBox x:Name="SensitivityBox" Width="110" TextChanged="Sensitivity_TextChanged"/>
+            </ctl:OptionControl>
+
+            <ctl:OptionControl Header="VR" Description="Use a connected VR headset in games that support it.">
+                <CheckBox x:Name="VrToggle" Style="{StaticResource ToggleSwitch}" Click="Vr_Click"/>
+            </ctl:OptionControl>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,71 @@
+<Window x:Class="RobloxModManager.UI.Bootstrapper.BootstrapperWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource AppWindow}"
+        Width="480" SizeToContent="Height" ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen">
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="Taskbar"/>
+    </Window.TaskbarItemInfo>
+
+    <Grid>
+        <!-- Fluent: large logo, status line, slim progress bar -->
+        <Grid x:Name="FluentPanel" Margin="28,26,28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Image Source="/Assets/logo.png" Width="64" Height="64" HorizontalAlignment="Left"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <TextBlock x:Name="FluentStatus" Grid.Row="1" FontSize="18" FontWeight="SemiBold"
+                       Margin="0,18,0,14" Text="Starting..." TextTrimming="CharacterEllipsis"/>
+            <ProgressBar x:Name="FluentProgress" Grid.Row="2" Style="{StaticResource ModernProgressBar}" IsIndeterminate="True"/>
+            <Button x:Name="FluentCancel" Grid.Row="3" Content="Cancel" HorizontalAlignment="Right"
+                    MinWidth="96" Margin="0,22,0,0" Click="Cancel_Click"/>
+        </Grid>
+
+        <!-- Classic: compact, always light, standard Windows progress bar -->
+        <Grid x:Name="ClassicPanel" Margin="18,18,18,16" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Image Source="/Assets/logo.png" Width="48" Height="48" VerticalAlignment="Top" Margin="0,0,16,0"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+            <StackPanel Grid.Column="1">
+                <TextBlock x:Name="ClassicStatus" Margin="0,2,0,10" Text="Starting..." TextTrimming="CharacterEllipsis"
+                           Foreground="#1A1A1A"/>
+                <ProgressBar x:Name="ClassicProgress" Height="18" Minimum="0" Maximum="100" IsIndeterminate="True"/>
+                <Button x:Name="ClassicCancel" Content="Cancel" HorizontalAlignment="Right" MinWidth="88"
+                        Margin="0,14,0,0" Click="Cancel_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Terminal: live log output -->
+        <Grid x:Name="TerminalPanel" Visibility="Collapsed" Background="{DynamicResource TerminalBackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBox x:Name="TerminalLog" Height="280" Background="Transparent" BorderThickness="0"
+                     Foreground="{DynamicResource TerminalTextBrush}" FontFamily="Cascadia Mono, Consolas" FontSize="12"
+                     IsReadOnly="True" TextWrapping="NoWrap" Padding="12,10" VerticalContentAlignment="Top"
+                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+
+            <Grid Grid.Row="1" Margin="12,6,12,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TerminalStatus" VerticalAlignment="Center" Foreground="{DynamicResource TerminalTextBrush}"
+                           FontFamily="Cascadia Mono, Consolas" FontSize="12" Text="Starting..." TextTrimming="CharacterEllipsis"/>
+                <Button x:Name="TerminalCancel" Grid.Column="1" Content="Cancel" MinWidth="88" Margin="12,0,0,0" Click="Cancel_Click"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

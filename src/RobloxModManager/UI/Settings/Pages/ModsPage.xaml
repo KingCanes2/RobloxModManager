@@ -1,0 +1,55 @@
+<UserControl x:Class="RobloxModManager.UI.Settings.Pages.ModsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:RobloxModManager.UI.Controls">
+    <StackPanel>
+        <TextBlock Style="{StaticResource PageTitle}" Text="Mods"/>
+        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,6,0,20"
+                   Text="Replace Roblox's sounds, textures, fonts and other files. Mods are applied every time Roblox starts, and removing a file puts the original back."/>
+
+        <ctl:OptionControl Header="Apply mods" Description="Turn off to play without your mods. Your files stay in the mods folder.">
+            <CheckBox x:Name="ApplyModsToggle" Style="{StaticResource ToggleSwitch}" Click="ApplyMods_Click"/>
+        </ctl:OptionControl>
+
+        <ctl:OptionControl Header="Mods folder" Description="Add files using the same layout as Roblox's own folder, for example content\sounds\ouch.ogg.">
+            <Button Content="Open folder" Click="OpenFolder_Click"/>
+        </ctl:OptionControl>
+
+        <TextBlock Style="{StaticResource SectionHeader}" Text="Custom font"/>
+
+        <ctl:OptionControl x:Name="FontOption" Header="Use a custom font">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Choose font..." Click="ChooseFont_Click"/>
+                <Button x:Name="RemoveFontButton" Content="Remove" Margin="8,0,0,0" Click="RemoveFont_Click"/>
+            </StackPanel>
+        </ctl:OptionControl>
+
+        <Grid Margin="0,18,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource SectionHeader}" Margin="0" VerticalAlignment="Center" Text="Files in your mods folder"/>
+            <Button Grid.Column="1" Content="Refresh" Click="Refresh_Click"/>
+        </Grid>
+
+        <TextBlock x:Name="ModsEmptyText" Style="{StaticResource SecondaryText}"
+                   Text="No mods yet. Open the mods folder and add files to get started."/>
+
+        <ListBox x:Name="ModList" Style="{StaticResource CardListBox}" MaxHeight="320" Visibility="Collapsed">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Path}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Size}" Margin="16,0,0,0"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </StackPanel>
+</UserControl>
